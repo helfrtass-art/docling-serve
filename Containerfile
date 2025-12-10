@@ -21,6 +21,9 @@ RUN --mount=type=bind,source=os-packages.txt,target=/tmp/os-packages.txt \
     dnf -y clean all && \
     rm -rf /var/cache/dnf
 
+# Ensure cache dir exists before fixing permissions
+RUN mkdir -p /opt/app-root/src/.cache/docling/models && chown -R 1001:0 /opt/app-root/src || true
+
 RUN /usr/bin/fix-permissions /opt/app-root/src/.cache
 
 ENV TESSDATA_PREFIX=/usr/share/tesseract/tessdata/
@@ -31,11 +34,18 @@ FROM ${UV_IMAGE} AS uv_stage
 # Docling layer                                                                                   #
 ###################################################################################################
 
+
 FROM docling-base
+
+# Ensure application directory exists and is writable by the app user
+RUN mkdir -p /opt/app-root/src && chown -R 1001:0 /opt/app-root/src || true
 
 USER 1001
 
 WORKDIR /opt/app-root/src
+
+# Create secure config directory for users.json with restricted permissions
+RUN mkdir -p /opt/app-root/src/config && chmod 700 /opt/app-root/src/config
 
 ENV \
     OMP_NUM_THREADS=4 \
@@ -45,7 +55,8 @@ ENV \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/opt/app-root \
-    DOCLING_SERVE_ARTIFACTS_PATH=/opt/app-root/src/.cache/docling/models
+    DOCLING_SERVE_ARTIFACTS_PATH=/opt/app-root/src/.cache/docling/models \
+    PYTHONHASHSEED=random
 
 ARG UV_SYNC_EXTRA_ARGS
 
@@ -69,6 +80,9 @@ RUN echo "Downloading models..." && \
 
 COPY --chown=1001:0 ./docling_serve ./docling_serve
 
+# Set restrictive permissions on config directory
+RUN chmod 700 /opt/app-root/src/config
+
 RUN --mount=from=uv_stage,source=/uv,target=/bin/uv \
     --mount=type=cache,target=/opt/app-root/src/.cache/uv,uid=1001 \
     --mount=type=bind,source=uv.lock,target=uv.lock \
@@ -77,4 +91,7 @@ RUN --mount=from=uv_stage,source=/uv,target=/bin/uv \
 
 EXPOSE 5001
 
+# Security: Use exec form to ensure proper signal handling
+# Mount users.json from OpenShift Secret/ConfigMap at runtime
+# Example: oc set volume deployment/docling-serve --add --name=config --mount-path=/opt/app-root/src/config --secret-name=docling-users
 CMD ["docling-serve", "run"]
