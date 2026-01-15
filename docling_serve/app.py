@@ -188,6 +188,15 @@ def create_app():  # noqa: C901
         allow_headers=headers,
     )
 
+    # Include authentication routes and optionally protect the UI with Basic Auth
+    try:
+        from docling_serve.login import router as auth_router, UI_USERNAME, UI_PASSWORD
+
+        # expose auth endpoints under /auth
+        app.include_router(auth_router)
+    except Exception:
+        _log.debug("Auth router not available; skipping auth router setup.")
+
     # Mount the Gradio app
     if docling_serve_settings.enable_ui:
         try:
@@ -214,6 +223,11 @@ def create_app():  # noqa: C901
                 allowed_paths=["./logo.png", tmp_output_dir],
                 root_path=gradio_root_path,
             )
+
+            # Defer wrapping the ASGI app with BasicAuthMiddleware until final
+            # app finalization to avoid replacing the FastAPI instance while
+            # routes are still being registered. Final wrapping happens after
+            # all routes are defined (see end of create_app()).
         except ImportError:
             _log.warning(
                 "Docling Serve enable_ui is activated, but gradio is not installed. "
@@ -1020,5 +1034,16 @@ def create_app():  # noqa: C901
     ):
         await orchestrator.clear_results(older_than=older_then)
         return ClearResponse()
+
+    # Finally, protect the Gradio UI with BasicAuthMiddleware by wrapping the
+    # ASGI app only after all routes and mounts have been defined. This avoids
+    # replacing the FastAPI instance while handlers are still being added.
+    try:
+        from docling_serve.login import BasicAuthMiddleware, UI_USERNAME as _UI_USERNAME, UI_PASSWORD as _UI_PASSWORD
+
+        if _UI_USERNAME and _UI_PASSWORD:
+            app = BasicAuthMiddleware(app, username=_UI_USERNAME, password=_UI_PASSWORD, path_prefix="/ui")
+    except Exception:
+        _log.debug("BasicAuthMiddleware not available at app finalization; skipping UI protection.")
 
     return app

@@ -1,0 +1,37 @@
+[
+  {
+    "username": "admin",
+    "password": "$2b$12$wrW0Wwv1uPNteUM09Ve9yeZQ8Z.rHQBXHgcdm6kckseA4SxuoGrbG",
+    "role": "admin"
+  },
+  {
+    "username": "hamza",
+    "password": "$2b$12$RHVoMs1FPR5mtdKXkgDuwe6MRIaJPLuTnwGnuEz.86raCUFvmTMpK",
+    "role": "admin"
+  },
+  {
+    "username": "houssam",
+    "password": "$2b$12$4Dhyxuyn4M6zoKFUOVSX.OdvuGsLuOmV4cPlw0v8T8sFT/S4X69ui",
+    "role": "admin"
+  },
+  {
+    "username": "chaymae",
+    "password": "$2b$12$eYmY3iWDbK118y1RmgOpUOQ90uq9CjTG6ZkS17qTOoGb3TcZDzDA2",
+    "role": "user"
+  },
+  {
+    "username": "fifi",
+    "password": "$2b$12$Tdp2DJBoTRrdPxLcCAlR/umfMNdX9yyb44MUX7pl/FTKcsFzQq.s2",
+    "role": "user"
+  },
+  {
+    "username": "h.elfrtass@powerm.ma",
+    "password": "$2b$12$ttvdot9cBK5O7Szos7/PGOE4/j2kbJVXOTxL/uxmvyqbHVz9va/oG",
+    "role": "admin"
+  },
+  {
+    "username": "hamza123",
+    "password": "$2b$12$ltb6cys4vrYQYYAZ0.mvdeJTwyTIBSLvh3WUexdcF6RUhf5uyTcK.",
+    "role": "user"
+  }
+]
